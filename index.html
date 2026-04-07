@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Companion | Smart Learning</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="glass-nav">
+        <div class="logo">AI Study Companion</div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#use-cases">Use Cases</a>
+            <a href="#about">About</a>
+            <button class="btn-login-white" onclick="openLogin()">Log In</button>
+            <button class="btn-started" onclick="openLogin()">Get Started</button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <span class="badge">Next-Gen Learning 2026</span>
+            <h1>Study <span class="gradient-text">Smarter</span>, Not Harder.</h1>
+            <p>Your 24/7 AI tutor for instant doubt-solving, smart study plans, and stress-free exam prep.</p>
+            <button class="btn-started-large" onclick="openLogin()">Get Started Now</button>
+        </div>
+    </header>
+
+    <section id="features" class="section reveal">
+        <h2 class="section-title">Powerful Features</h2>
+        <div class="grid">
+            <div class="card interactive">
+                <img src="images/doubt-solve.png" alt="Doubt Solving Icon" class="card-icon-img">
+                <h3>Instant Doubt-Solving</h3>
+                <p>Simplified explanations for the toughest problems. Just ask and learn.</p>
+            </div>
+            <div class="card interactive">
+                <img src="images/plans.png" alt="Smart Study Plans Icon" class="card-icon-img">
+                <h3>Smart Study Plans</h3>
+                <p>Custom schedules that adapt to your speed and exam dates.</p>
+            </div>
+            <div class="card interactive">
+                <img src="images/progress.png" alt="Progress Tracking Icon" class="card-icon-img">
+                <h3>Progress Tracking</h3>
+                <p>Analyze learning patterns with visual data and customized suggestions.</p>
+            </div>
+            <div class="card interactive">
+                <img src="images/exam.png" alt="Exam Reminders Icon" class="card-icon-img">
+                <h3>Exam Reminders</h3>
+                <p>Smart alerts for assignments so you never fall behind.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="use-cases" class="section bg-alt reveal">
+        <h2 class="section-title">Use Cases</h2>
+        <div class="split-container">
+            <div class="grid-half">
+                <div class="use-case-card">
+                    <h3>For Students</h3>
+                    <p>Turn 50-page textbooks into 5-minute summaries and practice quizzes.</p>
+                </div>
+                <div class="use-case-card">
+                    <h3>For Researchers</h3>
+                    <p>Organize citations and simplify complex research papers instantly.</p>
+                </div>
+            </div>
+            <div class="image-box">
+                <img src="images/use-case-study.png" alt="Use Case Illustration" class="side-img float-glow">
+            </div>
+        </div>
+    </section>
+
+    <section id="benefits" class="section reveal">
+        <h2 class="section-title">The Benefits</h2>
+        <div class="split-container reverse">
+            <div class="grid-half">
+                <div class="benefit-box">
+                    <h4>Interactive Learning</h4>
+                    <p>Engage with your studies through AI dialogue instead of passive reading.</p>
+                </div>
+                <div class="benefit-box">
+                    <h4>Better Grades</h4>
+                    <p>Focused practice quizzes target exactly what you need to improve.</p>
+                </div>
+            </div>
+            <div class="image-box">
+                <img src="images/benefits-visual.png" alt="Benefits Illustration" class="side-img float-glow">
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="section bg-alt reveal">
+        <div class="about-flex">
+            <div class="about-text">
+                <h2>About Us</h2>
+                <p>We are a team of students building tools that make high-level education accessible to everyone through Artificial Intelligence.</p>
+            </div>
+            <div class="image-box">
+                <img src="images/about-us.png" alt="About Us" class="card-ico-img">
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer-area">
+        <h3>Contact Us</h3>
+        <p>Email: bbotla@gitam.in</p>
+        <div class="social-links">
+            <a href="#">LinkedIn</a> | <a href="#">Twitter</a> | <a href="#">Discord</a>
+        </div>
+        <p class="copyright">© 2026 AI Study Companion</p>
+    </footer>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content glass">
+            <span class="close" onclick="closeLogin()">&times;</span>
+            
+            <div id="authContent">
+                <h3 id="modalTitle">Sign In</h3>
+                <button class="google-btn" onclick="handleGoogleLogin()">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="">
+                    Sign in with Google
+                </button>
+                <div class="divider">OR</div>
+                
+                <div id="authFields">
+                    <input type="text" id="regName" placeholder="Full Name" class="input-field signup-only" style="display: none;">
+                    <input type="email" placeholder="Email" class="input-field" id="userEmail">
+                    
+                    <div class="password-container" style="position: relative; width: 100%;">
+                        <input type="password" placeholder="Password" class="input-field" id="userPass">
+                        <span id="togglePassword" onclick="togglePasswordVisibility()" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; opacity: 0.6;">👁️</span>
+                    </div>
+
+                    <p id="forgotLink" style="text-align: right; font-size: 0.75rem; margin-top: 5px;">
+                        <a href="#" onclick="showForgotPage()" style="color: var(--accent); text-decoration: none;">Forgot Password?</a>
+                    </p>
+                    
+                    <button class="btn-started" style="width: 100%; margin-top: 10px;" onclick="validateAndLogin()" id="mainAuthBtn">Continue</button>
+                </div>
+                
+                <p id="toggleText" style="margin-top:15px; font-size: 0.8rem; cursor:pointer;">
+                    <span id="toggleQuestion">Don't have an account?</span> 
+                    <span class="gradient-text" onclick="toggleAuthMode()" id="toggleAction">Sign Up</span>
+                </p>
+            </div>
+
+            <div id="forgotSection" style="display: none;">
+                <h3 class="gradient-text">Reset Password</h3>
+                <p style="font-size: 0.8rem; margin-bottom: 15px;">Enter your email to set a new password.</p>
+                <input type="email" id="resetEmail" placeholder="Your Registered Email" class="input-field">
+                <input type="password" id="newPass" placeholder="New Password" class="input-field">
+                <button class="btn-started" style="width: 100%; margin-top: 10px;" onclick="resetPassword()">Update Password</button>
+                <p onclick="hideForgotPage()" style="margin-top: 15px; cursor: pointer; font-size: 0.8rem;">← Back to Login</p>
+            </div>
+        </div>
+    </div>
+<script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, 
+                 createUserWithEmailAndPassword, 
+                 signInWithEmailAndPassword, 
+                 signInWithPopup, 
+                 GoogleAuthProvider, 
+                 onAuthStateChanged, 
+                 signOut, 
+                 sendPasswordResetEmail,
+                 updateProfile 
+               } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHmTrxNR69XKZPqPs82jBlKoThAufW07E",
+            authDomain: "ai-study-companion-28d3d.firebaseapp.com",
+            projectId: "ai-study-companion-28d3d",
+            storageBucket: "ai-study-companion-28d3d.firebasestorage.app",
+            messagingSenderId: "84658840782",
+            appId: "1:84658840782:web:9e2df12a537b0ea80d5c9f"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Export these to the window object so your script.js can see them
+        window.auth = auth;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.signInWithPopup = signInWithPopup;
+        window.GoogleAuthProvider = GoogleAuthProvider;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.signOut = signOut;
+        window.sendPasswordResetEmail = sendPasswordResetEmail;
+        window.updateProfile = updateProfile;
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
