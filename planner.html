@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Study Planner | AI Study Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+
+    <style>
+        /* --- ORIGINAL DESIGN STYLES --- */
+        .planner-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+        .filter-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: var(--card); color: white; cursor: pointer; font-size: 0.8rem; transition: 0.3s; }
+        .filter-btn.active { background: var(--accent); border-color: var(--accent); }
+        .filter-btn:hover { border-color: var(--accent); }
+        
+        .table-wrapper { overflow-x: auto; background: var(--card); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 18px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { background: rgba(255,255,255,0.02); font-size: 0.9rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        
+        .status-badge { padding: 6px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+        .status-pending { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
+        .status-completed { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+        .priority-high { color: #ff4757; font-weight: 800; }
+        
+        #calendar-container { display: none; background: var(--card); padding: 25px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); margin-top: 20px; }
+        .fc { font-family: 'Plus Jakarta Sans', sans-serif; color: white; border: none !important; }
+        .progress-container { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); margin-top: 40px; }
+
+        /* --- MODAL DESIGN --- */
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); 
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
+        }
+
+        .modal-content.glass {
+            background: #111827 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 24px;
+            padding: 35px;
+            color: white;
+            width: 480px;
+            max-width: 95%;
+            margin: 5vh auto;
+            position: relative;
+        }
+
+        .close { position: absolute; right: 20px; top: 15px; color: #fff; font-size: 28px; font-weight: bold; cursor: pointer; }
+
+        .input-field {
+            width: 100%;
+            padding: 14px;
+            margin-top: 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #1f2937 !important;
+            color: white !important;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        .modal-footer-btns { display: flex; gap: 15px; margin-top: 30px; }
+        body.modal-open { overflow: hidden; }
+    </style>
+</head>
+<body>
+    <nav class="glass-nav">
+        <div class="logo" onclick="window.location.href='dashboard.html'" style="cursor:pointer">AI Study Companion</div>
+        <div class="nav-links">
+            <button class="btn-login-white" onclick="window.location.href='dashboard.html'">Dashboard</button>
+            <button class="btn-started" onclick="window.logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="planner-header">
+            <div>
+                <h1 style="margin:0;">Study <span class="gradient-text">Planner</span></h1>
+                <p style="opacity: 0.7;">Organize and manage your academic schedule</p>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-started" onclick="openTaskModal()">+ Add Task</button>
+                <button id="viewToggleBtn" class="btn-login-white" onclick="toggleCalendarView()">Calendar View</button>
+            </div>
+        </div>
+
+        <div class="filter-bar" id="filterBar">
+            <span style="font-size: 0.9rem; opacity: 0.6; margin-right: 10px;">Filter Status:</span>
+            <button class="filter-btn active" onclick="filterTasks('All', this)">All</button>
+            <button class="filter-btn" onclick="filterTasks('Pending', this)">Pending</button>
+            <button class="filter-btn" onclick="filterTasks('Completed', this)">Completed</button>
+        </div>
+
+        <div class="table-wrapper" id="tableView">
+            <table id="taskTable">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Topic</th>
+                        <th>Date & Time</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="taskTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="calendar-container">
+            <div id="calendar"></div>
+        </div>
+
+        <div class="progress-container">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h3 style="margin-bottom: 5px;">Overall Study Progress</h3>
+                    <p style="font-size: 0.85rem; opacity: 0.6;">Keep going! You're doing great.</p>
+                </div>
+                <div id="completionRate" style="font-size: 2.5rem; font-weight: 800; color: var(--accent);">0%</div>
+            </div>
+            <div style="width: 100%; background: rgba(255,255,255,0.05); height: 14px; border-radius: 7px; margin: 20px 0; overflow: hidden;">
+                <div id="plannerProgressBar" style="width: 0%; background: linear-gradient(90deg, var(--accent), #22d3ee); height: 100%; border-radius: 7px; transition: 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+            </div>
+            <div style="display: flex; gap: 30px; font-weight: 600;">
+                <span id="statCompleted" style="color: #28a745;">Completed: 0</span>
+                <span id="statPending" style="color: #ffc107;">Pending: 0</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="taskModal" class="modal">
+        <div class="modal-content glass">
+            <span class="close" onclick="closeTaskModal()">&times;</span>
+            <h2 class="gradient-text" style="margin-top: 0;">Add New Task</h2>
+            <p style="font-size: 0.9rem; opacity: 0.7; margin-bottom: 25px;">Enter your study goal details below.</p>
+            
+            <div style="text-align: left;">
+                <label for="taskSubject" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; display: block;">Subject Name</label>
+                <input type="text" id="taskSubject" placeholder="e.g. Computer Networks" class="input-field">
+                
+                <label for="taskTopic" style="font-size: 0.8rem; font-weight: 700; margin-top: 15px; margin-bottom: 5px; display: block;">Topic Details</label>
+                <input type="text" id="taskTopic" placeholder="e.g. TCP/IP Model Layers" class="input-field">
+
+                <label for="taskDurationType" style="font-size: 0.8rem; font-weight: 700; margin-top: 15px; margin-bottom: 5px; display: block;">Goal Type</label>
+                <select id="taskDurationType" class="input-field" onchange="toggleDurationUI()" style="background: #1e293b; color: white;">
+                    <option value="Short">Short-Term (Single Sitting)</option>
+                    <option value="Long">Long-Term (2-10 Days)</option>
+                </select>
+                
+                <div style="display: flex; gap: 15px; margin-top: 15px;">
+                    <div style="flex:1;">
+                        <label id="dateLabel" for="taskDate" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; display: block;">Study Date</label>
+                        <input type="date" id="taskDate" class="input-field">
+                    </div>
+                    
+                    <div id="timeInputsWrapper" style="flex:2; display: flex; gap: 10px;">
+                        <div style="flex:1;">
+                            <label for="taskTime" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; display: block;">Start</label>
+                            <input type="time" id="taskTime" class="input-field">
+                        </div>
+                        <div style="flex:1;">
+                            <label for="taskEndTime" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; display: block;">End</label>
+                            <input type="time" id="taskEndTime" class="input-field">
+                        </div>
+                    </div>
+
+                    <div id="endDateWrapper" style="flex:1; display: none;">
+                        <label for="taskEndDate" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; display: block;">End Date</label>
+                        <input type="date" id="taskEndDate" class="input-field">
+                    </div>
+                </div>
+
+                <label for="taskPriority" style="font-size: 0.8rem; font-weight: 700; margin-top: 15px; margin-bottom: 5px; display: block;">Priority Level</label>
+                <select id="taskPriority" class="input-field" style="background: #1e293b; color: white;">
+                    <option value="Low">Low Priority</option>
+                    <option value="Medium" selected>Medium Priority</option>
+                    <option value="High">High Priority (Urgent)</option>
+                </select>
+            </div>
+
+            <div class="modal-footer-btns">
+                <button class="btn-started" style="flex: 2" onclick="saveNewTask()">Create Task</button>
+                <button class="btn-login-white" style="flex: 1" onclick="closeTaskModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHmTrxNR69XKZPqPs82jBlKoThAufW07E",
+            authDomain: "ai-study-companion-28d3d.firebaseapp.com",
+            projectId: "ai-study-companion-28d3d",
+            storageBucket: "ai-study-companion-28d3d.firebasestorage.app",
+            messagingSenderId: "84658840782",
+            appId: "1:84658840782:web:9e2df12a537b0ea80d5c9f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.auth = getAuth(app);
+        window.signOut = signOut;
+    </script>
+
+    <script src="script.js"></script>
+    <script>
+        // Ensure these functions are globally available for buttons to work
+        function toggleDurationUI() {
+            const type = document.getElementById("taskDurationType").value;
+            const dateLabel = document.getElementById("dateLabel");
+            const timeInputs = document.getElementById("timeInputsWrapper");
+            const endDateWrapper = document.getElementById("endDateWrapper");
+
+            if (type === "Long") {
+                dateLabel.innerText = "Start Date";
+                timeInputs.style.display = "none";
+                endDateWrapper.style.display = "block";
+            } else {
+                dateLabel.innerText = "Study Date";
+                timeInputs.style.display = "flex";
+                endDateWrapper.style.display = "none";
+            }
+        }
+        window.toggleDurationUI = toggleDurationUI;
+        
+        // Modal handlers
+        window.openTaskModal = function() {
+            document.getElementById('taskModal').style.display = 'block';
+            document.body.classList.add('modal-open');
+        };
+        
+        window.closeTaskModal = function() {
+            document.getElementById('taskModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        };
+    </script>
+</body>
+</html>
