@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reminders | AI Study Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+
+    <nav class="glass-nav">
+        <div class="logo" onclick="window.location.href='dashboard.html'" style="cursor:pointer">AI Study Companion</div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <button class="btn-login-white" onclick="window.logout()">Logout</button>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        <header class="planner-header">
+            <div>
+                <h1>Study <span class="gradient-text">Reminders</span></h1>
+                <p style="opacity: 0.7;">Get notified before your tasks are due.</p>
+            </div>
+            <button class="btn-started" onclick="requestNotificationPermission()">Enable Notifications</button>
+        </header>
+
+        <section class="card" style="margin-top: 20px;">
+            <h3>Active Alerts</h3>
+            <p style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 20px;">
+                Reminders are automatically synced with your <b>Study Planner</b> tasks.
+            </p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Time Remaining</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reminderList">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+    <script src="script.js"></script>
+    <script>
+        // Specific logic for the Reminders Page
+        // --- UPDATED REMINDERS LOGIC ---
+window.onload = function() {
+    renderReminders();
+    syncNotificationUI(); // Check UI state on load
+    setInterval(renderReminders, 60000);
+};
+
+function syncNotificationUI() {
+    const btn = document.querySelector('.btn-started');
+    if (!btn) return;
+
+    if (Notification.permission === "granted") {
+        btn.innerText = "✓ System Synced";
+        btn.style.background = "linear-gradient(90deg, #28a745, #22d3ee)";
+        btn.onclick = null; 
+    }
+}
+
+function requestNotificationPermission() {
+    const btn = document.querySelector('.btn-started');
+    
+    Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+            syncNotificationUI();
+            new Notification("AI Study Companion", {
+                body: "Priority reminders are now active! 🚀",
+                icon: "images/doubt-solve.png"
+            });
+        } else {
+            alert("Please allow notifications in settings.");
+        }
+    });
+}
+
+function renderReminders() {
+    const list = document.getElementById("reminderList");
+    let tasks = JSON.parse(localStorage.getItem("studyTasks")) || [];
+    list.innerHTML = "";
+
+    // 1. Only show tasks that aren't "Completed" yet
+    const activeTasks = tasks.filter(t => t.status === "Pending");
+    
+    // 2. SORTING LOGIC: 
+    // - Overdue tasks first
+    // - Then High Priority
+    // - Then by Date/Time
+    activeTasks.sort((a, b) => {
+        const timeA = new Date(a.date + "T" + a.time);
+        const timeB = new Date(b.date + "T" + b.time);
+        const now = new Date();
+
+        const isOverdueA = timeA < now;
+        const isOverdueB = timeB < now;
+
+        if (isOverdueA && !isOverdueB) return -1; // Overdue A comes first
+        if (!isOverdueA && isOverdueB) return 1;  // Overdue B comes first
+        
+        // If both are overdue or both are upcoming, sort by priority
+        if (a.priority === "High" && b.priority !== "High") return -1;
+        if (a.priority !== "High" && b.priority === "High") return 1;
+
+        return timeA - timeB; // Finally, sort by time
+    });
+
+    if (activeTasks.length === 0) {
+        list.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:40px; opacity:0.5;'>No active study sessions found.</td></tr>";
+        return;
+    }
+
+    activeTasks.forEach(t => {
+        const taskTime = new Date(t.date + "T" + (t.time || "00:00"));
+        const now = new Date();
+        const diff = taskTime - now;
+        
+        const isOverdue = diff <= 0;
+        let timeStr = isOverdue ? "⚠️ Overdue" : formatTime(diff);
+        
+        // Dynamic styling for Overdue vs Upcoming
+        let timeColor = isOverdue ? "#ff4757" : (diff < 3600000 ? "#ffa502" : "inherit");
+        let priorityClass = t.priority === "High" ? "priority-high-tag" : "";
+        
+        const row = document.createElement("tr");
+        // Add a slight red background if overdue to make it stand out
+        if (isOverdue) row.style.background = "rgba(255, 71, 87, 0.05)";
+
+        row.innerHTML = `
+            <td>
+                <div style="display:flex; flex-direction:column;">
+                    <span style="font-size:0.7rem;" class="${priorityClass}">[${t.priority} Priority]</span>
+                    <b>${t.subject}</b>: ${t.topic}
+                </div>
+            </td>
+            <td style="color: ${timeColor}; font-weight: ${isOverdue ? 'bold' : 'normal'};">
+                ${timeStr}
+            </td>
+            <td><span class="status-badge ${isOverdue ? 'status-pending' : 'status-pending'}">
+                ${isOverdue ? 'Urgent' : 'Alert Active'}
+            </span></td>
+        `;
+        list.appendChild(row);
+    });
+}
+
+function formatTime(ms) {
+    const mins = Math.floor(ms / 60000);
+    const hrs = Math.floor(mins / 60);
+    if (hrs > 0) return `${hrs}h ${mins % 60}m left`;
+    return `${mins}m left`;
+}
+    </script>
+    <style>
+    /* Breathing room for the reminders container */
+    .dashboard-container {
+        padding-bottom: 50px;
+    }
+
+    /* Fixes the "congested" card look */
+    .card {
+        padding: 2.5rem !important; 
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Table Spacing */
+    .table-wrapper {
+        margin-top: 25px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        text-align: left;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.8;
+    }
+
+    td {
+        padding: 20px 15px; /* Added vertical padding to declutter */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Priority Glow Effects */
+    .priority-high-tag {
+        color: #ff4757;
+        text-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
+        font-weight: 800;
+    }
+
+    /* Sync Button Active State */
+    .btn-active-glow {
+        box-shadow: 0 0 20px rgba(40, 167, 69, 0.4);
+        border: none;
+        cursor: default;
+    }
+
+    /* Responsiveness */
+    @media (max-width: 768px) {
+        .card {
+            padding: 1.5rem !important;
+        }
+        td {
+            font-size: 0.9rem;
+        }
+    }
+    @keyframes pulse-red {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+    }
+
+    td[style*="#ff4757"] {
+    animation: pulse-red 2s infinite;
+    }
+</style>
+</body>
+</html>
