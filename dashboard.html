@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | AI Study Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+
+    <nav class="glass-nav">
+        <div class="logo">AI Study Companion</div>
+        <div class="nav-links">
+            <a href="#">Dashboard</a>
+            <a href="#" onclick="comingSoon('Study Planner')">Planner</a>
+            <a href="#" onclick="comingSoon('Task Manager')">Tasks</a>
+            <button class="btn-login-white" onclick="window.logout()">Logout</button>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        
+        <header class="welcome-section reveal active">
+            <div class="welcome-text">
+                <h1>Welcome, <span id="displayUser" class="gradient-text">Scholar</span> 👋</h1>
+                <p>Here is your study overview for today.</p>
+            </div>
+            <div class="today-stats">
+                <div class="stat-item">
+                    <span class="stat-val">3</span>
+                    <span class="stat-label">Pending Tasks</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val">85%</span>
+                    <span class="stat-label">Daily Goal</span>
+                </div>
+            </div>
+        </header>
+
+        <hr class="divider">
+
+        <section class="dashboard-section">
+            <h2 class="section-subtitle">Study Tools</h2>
+            <div class="grid">
+                <div class="card interactive" onclick="window.location.href='planner.html'">
+                    <div class="card-icon">📅</div>
+                    <h3>Study Planner</h3>
+                    <p>Adaptive scheduling for your upcoming exams.</p>
+                </div>
+                <div class="card interactive" onclick="window.location.href='reminders.html'">
+                    <div class="card-icon">🔔</div>
+                    <h3>Reminders</h3>
+                    <p>Smart alerts for assignments and deadlines.</p>
+                </div>
+                <div class="card" onclick="window.location.href='tasks.html'" style="cursor:pointer">
+                    <span style="font-size: 1.5rem;">📋</span>
+                    <h3>Task Manager</h3>
+                    <p>Organize and track your daily focus goals.</p>
+                </div>
+                <div class="card interactive" onclick="window.location.href='summary.html'" style="cursor:pointer">
+                    <div class="card-icon">📝</div>
+                    <h3>AI Summary</h3>
+                    <p>Turn long lectures into concise bullet points.</p>
+                </div>
+                <div class="card interactive" onclick="comingSoon('AI Doubt Solver')">
+                    <div class="card-icon">⚡</div>
+                    <h3>Doubt Solver</h3>
+                    <p>Instant explanations for complex problems.</p>
+                </div>
+                <div class="card interactive" onclick="comingSoon('Quiz Generator')">
+                    <div class="card-icon">🧠</div>
+                    <h3>Quiz Gen</h3>
+                    <p>Test your knowledge with AI practice tests.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-section reveal">
+            <h2 class="section-subtitle">Learning Analytics</h2>
+            <div class="analytics-container">
+                <div class="card analytics-main">
+                    <h3>Progress Tracking</h3>
+                    <div class="chart-box">
+                        <div class="bar-wrapper"><div class="bar" style="height: 40%"></div><span>Mon</span></div>
+                        <div class="bar-wrapper"><div class="bar" style="height: 80%"></div><span>Tue</span></div>
+                        <div class="bar-wrapper"><div class="bar" style="height: 60%"></div><span>Wed</span></div>
+                        <div class="bar-wrapper"><div class="bar" style="height: 95%"></div><span>Thu</span></div>
+                        <div class="bar-wrapper"><div class="bar" style="height: 50%"></div><span>Fri</span></div>
+                    </div>
+                </div>
+                <div class="card insights-sidebar">
+                    <h3>Insights</h3>
+                    <ul class="insights-list">
+                        <li>🚀 <strong>12% Increase</strong> in focus time vs last week.</li>
+                        <li>💡 <strong>Tip:</strong> You study best between 8 AM - 10 AM.</li>
+                        <li>⚠️ <strong>Focus:</strong> Review "Quantum Physics" notes.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast" class="toast">Coming Soon!</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
