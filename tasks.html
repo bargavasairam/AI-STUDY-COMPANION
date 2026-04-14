@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager | AI Study Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <style>
+        .planner-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .table-wrapper { background: var(--card); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 18px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { background: rgba(255,255,255,0.02); font-size: 0.9rem; color: var(--accent); text-transform: uppercase; }
+        
+        .completed-text { text-decoration: line-through; opacity: 0.5; }
+        .checkbox-custom { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent); }
+        
+        /* Drag and Drop Styles */
+        .sortable-ghost { opacity: 0.4; background: var(--accent) !important; }
+        .drag-handle { cursor: grab; color: rgba(255,255,255,0.3); padding-right: 10px; font-size: 1.2rem; }
+        .drag-handle:active { cursor: grabbing; }
+        
+        tr { cursor: default; transition: background 0.2s; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        
+        .btn-clear { background: none; border: 1px solid #ff4757; color: #ff4757; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; transition: 0.3s; }
+        .btn-clear:hover { background: #ff4757; color: white; }
+    </style>
+</head>
+<body class="dashboard-body">
+
+    <nav class="glass-nav">
+        <div class="logo" onclick="window.location.href='dashboard.html'" style="cursor:pointer">AI Study Companion</div>
+        <div class="nav-links">
+            <a href="dashboard.html" style="color: white; text-decoration: none; margin-right: 20px; font-weight: 600;">Dashboard</a>
+            <button class="btn-login-white" onclick="window.logout()">Logout</button>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        <header class="planner-header">
+            <div>
+                <h1>Daily <span class="gradient-text">Focus</span></h1>
+                <p style="opacity: 0.7;">Drag to prioritize. Tick to achieve.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-clear" onclick="clearCompleted()">Clear Finished</button>
+                <button class="btn-started" onclick="addQuickTask()">+ New Goal</button>
+            </div>
+        </header>
+
+        <section class="card">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th> <th style="width: 50px;">Done</th>
+                            <th>Focus Goal</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quickTaskList">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let quickTasks = JSON.parse(localStorage.getItem("quickTasks")) || [];
+
+        window.onload = function() {
+            renderTasks();
+            initDraggable();
+        };
+
+        function initDraggable() {
+            const el = document.getElementById('quickTaskList');
+            Sortable.create(el, {
+                animation: 150,
+                handle: '.drag-handle', // Restrict dragging to the handle
+                ghostClass: 'sortable-ghost',
+                onEnd: function() {
+                    // Reorder the array based on the new DOM order
+                    const newOrder = [];
+                    document.querySelectorAll('#quickTaskList tr').forEach(row => {
+                        newOrder.push(quickTasks[row.dataset.index]);
+                    });
+                    quickTasks = newOrder;
+                    saveAndRender();
+                }
+            });
+        }
+
+        function renderTasks() {
+            const list = document.getElementById("quickTaskList");
+            list.innerHTML = "";
+
+            if (quickTasks.length === 0) {
+                list.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:40px; opacity:0.5;">No daily goals set yet. Add one to start!</td></tr>`;
+                return;
+            }
+
+            quickTasks.forEach((t, index) => {
+                const row = document.createElement("tr");
+                row.dataset.index = index; // Store original index for reordering
+                row.innerHTML = `
+                    <td><span class="drag-handle">☰</span></td>
+                    <td>
+                        <input type="checkbox" class="checkbox-custom" ${t.done ? 'checked' : ''} onchange="toggleTask(${index})">
+                    </td>
+                    <td class="${t.done ? 'completed-text' : ''}">
+                        <span style="font-weight: 600;">${t.text}</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <button onclick="deleteTask(${index})" style="background:none; border:none; color:#ff4757; cursor:pointer; font-size: 0.8rem;">Delete</button>
+                    </td>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        function addQuickTask() {
+            const val = prompt("What is your focus for now?");
+            if (val && val.trim() !== "") {
+                // New tasks go to the TOP of the stack
+                quickTasks.unshift({ text: val, done: false });
+                saveAndRender();
+            }
+        }
+
+        function toggleTask(index) {
+            quickTasks[index].done = !quickTasks[index].done;
+            saveAndRender();
+        }
+
+        function deleteTask(index) {
+            quickTasks.splice(index, 1);
+            saveAndRender();
+        }
+
+        function clearCompleted() {
+            quickTasks = quickTasks.filter(t => !t.done);
+            saveAndRender();
+        }
+
+        function saveAndRender() {
+            localStorage.setItem("quickTasks", JSON.stringify(quickTasks));
+            renderTasks();
+        }
+
+        // Global logout for consistency
+        window.logout = function() {
+            localStorage.removeItem("activeUser");
+            window.location.href = "index.html";
+        };
+    </script>
+</body>
+</html>
