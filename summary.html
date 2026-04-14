@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Summary | Study Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        .summary-container {
+            max-width: 900px;
+            margin: 40px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            color: white;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        textarea:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.05); }
+
+        .output-box {
+            background: var(--card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            height: 400px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .summary-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            grid-column: span 2;
+        }
+
+        .loading-dots:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+
+        @media (max-width: 768px) {
+            .summary-container { grid-template-columns: 1fr; }
+            .summary-actions { grid-column: span 1; flex-direction: column; gap: 15px; }
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+
+    <nav class="glass-nav">
+        <div class="logo" onclick="window.location.href='dashboard.html'" style="cursor:pointer">AI Study Companion</div>
+        <div class="nav-links">
+            <a href="dashboard.html" style="color: white; text-decoration: none; margin-right: 20px; font-weight: 600;">Dashboard</a>
+            <button class="btn-login-white" onclick="window.logout()">Logout</button>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        <header style="margin-bottom: 30px;">
+            <h1 style="margin:0;">AI <span class="gradient-text">Summary</span></h1>
+            <p style="opacity: 0.7;">Convert complex lectures into concise study notes.</p>
+        </header>
+
+        <div class="summary-container">
+            <div class="input-section">
+                <h3 style="margin-bottom: 15px; font-size: 0.9rem; text-transform: uppercase; color: var(--accent);">Paste Lecture Content</h3>
+                <textarea id="inputText" placeholder="Paste your long notes, articles, or transcript here..."></textarea>
+            </div>
+
+            <div class="output-section">
+                <h3 style="margin-bottom: 15px; font-size: 0.9rem; text-transform: uppercase; color: var(--accent);">Generated Summary</h3>
+                <div id="outputContent" class="output-box">
+                    <p style="opacity: 0.4; text-align: center; margin-top: 150px;">The summary will appear here...</p>
+                </div>
+            </div>
+
+            <div class="summary-actions">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-login-white" onclick="clearText()">Clear</button>
+                    <button class="btn-login-white" onclick="copySummary()">Copy Result</button>
+                </div>
+                <button class="btn-started" id="generateBtn" onclick="generateSummary()">✨ Generate Summary</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_KEY = "api_key"; 
+let WORKING_MODEL = ""; // This will be filled automatically
+
+// --- 1. THE AUTO-DETECTOR (Runs once to find your working model) ---
+async function findWorkingModel() {
+    try {
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
+        const data = await resp.json();
+        
+        if (data.models) {
+            // We look for any model that supports 'generateContent' and is 'flash' or 'pro'
+            const bestModel = data.models.find(m => 
+                m.supportedGenerationMethods.includes("generateContent") && 
+                (m.name.includes("flash") || m.name.includes("pro"))
+            );
+            
+            if (bestModel) {
+                WORKING_MODEL = bestModel.name; 
+                console.log("✅ Success! Using model:", WORKING_MODEL);
+            }
+        }
+    } catch (err) {
+        console.error("Could not auto-detect model:", err);
+    }
+}
+
+// Initialize the detector immediately
+findWorkingModel();
+
+// --- 2. THE GENERATOR ---
+async function generateSummary() {
+    const inputText = document.getElementById("inputText").value;
+    const output = document.getElementById("outputContent");
+    const btn = document.getElementById("generateBtn");
+
+    if (!inputText || inputText.trim().length < 20) {
+        alert("Please paste more text to summarize.");
+        return;
+    }
+
+    // If the detector hasn't finished, try to run it again
+    if (!WORKING_MODEL) {
+        await findWorkingModel();
+    }
+
+    if (!WORKING_MODEL) {
+        output.innerHTML = "Error: No compatible AI models found for this API Key.";
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = "Summarizing...";
+    output.innerHTML = `<div style="text-align:center; margin-top:150px;">AI is processing...</div>`;
+
+    try {
+        // We use the automatically detected WORKING_MODEL name here
+        const API_URL = `https://generativelanguage.googleapis.com/v1/${WORKING_MODEL}:generateContent?key=${API_KEY}`;
+        
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: "Summarize this into bullet points: " + inputText }]
+                }]
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error.message);
+
+        const result = data.candidates[0].content.parts[0].text;
+        
+        // Simple formatting
+        let html = result
+            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+            .replace(/\n/g, '<br>');
+            
+        output.innerHTML = `<div style="line-height:1.6;">${html}</div>`;
+
+    } catch (error) {
+        console.error("API Error:", error);
+        output.innerHTML = `<p style="color:#ff4757;"><b>Error:</b> ${error.message}</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = "✨ Generate Summary";
+    }
+}
+
+// Helpers
+function clearText() {
+    document.getElementById("inputText").value = "";
+    document.getElementById("outputContent").innerHTML = "";
+}
+
+function copySummary() {
+    const text = document.getElementById("outputContent").innerText;
+    navigator.clipboard.writeText(text);
+    alert("Copied!");
+}
+
+window.logout = () => { localStorage.removeItem("activeUser"); window.location.href="index.html";
+
+ };
+    </script>
+</body>
+</html>
